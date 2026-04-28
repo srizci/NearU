@@ -100,16 +100,17 @@ struct MapScreen: View {
                                 Image(systemName: "figure.walk")
                                 Text("Rota Oluştur")
                             }
+                            .buttonStyle(MainButtonStyle(color: .appAccent))
                             .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
-                            .background(Color.green)
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                            .background(Color.black)
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
                         }
                     }
                     .padding()
-                    .background(.ultraThinMaterial)
+                    .background(.thickMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 18))
                     .padding(.horizontal)
                 }
@@ -190,7 +191,7 @@ struct MapScreen: View {
                                 .frame(width: 46, height: 46)
                                 .background(Color(.systemBackground))
                                 .clipShape(Circle())
-                                .shadow(color: .black.opacity(0.12), radius: 6, x: 0, y: 4)
+                                .shadow(color: .black.opacity(0.7), radius: 6, x: 0, y: 4)
                         }
 
                         Button {
@@ -202,7 +203,7 @@ struct MapScreen: View {
                                 .frame(width: 46, height: 46)
                                 .background(Color(.systemBackground))
                                 .clipShape(Circle())
-                                .shadow(color: .black.opacity(0.12), radius: 6, x: 0, y: 4)
+                                .shadow(color: .black.opacity(0.7), radius: 6, x: 0, y: 4)
                         }
 
                         Button {
