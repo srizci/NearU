@@ -19,6 +19,8 @@ final class LocationService: NSObject, ObservableObject, CLLocationManagerDelega
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
+        manager.distanceFilter = 20
+        authorizationStatus = manager.authorizationStatus
     }
 
     func requestPermission() {
@@ -26,7 +28,12 @@ final class LocationService: NSObject, ObservableObject, CLLocationManagerDelega
     }
 
     func startUpdatingLocation() {
+        guard CLLocationManager.locationServicesEnabled() else { return }
         manager.startUpdatingLocation()
+    }
+
+    func stopUpdatingLocation() {
+        manager.stopUpdatingLocation()
     }
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
@@ -35,10 +42,13 @@ final class LocationService: NSObject, ObservableObject, CLLocationManagerDelega
         switch manager.authorizationStatus {
         case .notDetermined:
             manager.requestWhenInUseAuthorization()
+
         case .authorizedWhenInUse, .authorizedAlways:
             manager.startUpdatingLocation()
+
         case .denied, .restricted:
             break
+
         @unknown default:
             break
         }
@@ -47,5 +57,9 @@ final class LocationService: NSObject, ObservableObject, CLLocationManagerDelega
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         userLocation = location
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Konum alınamadı: \(error.localizedDescription)")
     }
 }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A61883CD2F84ECAD00A5F996 /* MapViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61883CC2F84ECA500A5F996 /* MapViewRepresentable.swift */; };
 		A692A1652F7BAE3300B12E96 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A692A1642F7BAE3300B12E96 /* ContentView.swift */; };
 		A692A1792F7BB4CA00B12E96 /* MapScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A692A1782F7BB4C400B12E96 /* MapScreen.swift */; };
 		A692A17B2F7BB4D500B12E96 /* SearchBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A692A17A2F7BB4CE00B12E96 /* SearchBarView.swift */; };
@@ -19,6 +20,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A61883CC2F84ECA500A5F996 /* MapViewRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewRepresentable.swift; sourceTree = "<group>"; };
+		A6441D8F2FA0B14E00F6AB59 /* Untitled.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Untitled.swift; sourceTree = "<group>"; };
 		A692A15F2F7BAE3300B12E96 /* NearU.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NearU.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A692A1642F7BAE3300B12E96 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A692A1732F7BB47600B12E96 /* PlaceItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceItem.swift; sourceTree = "<group>"; };
@@ -84,6 +87,7 @@
 		A692A16E2F7BB40700B12E96 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A61883CC2F84ECA500A5F996 /* MapViewRepresentable.swift */,
 				A692A17E2F7BB4E300B12E96 /* FavoritesView.swift */,
 				A692A17C2F7BB4D900B12E96 /* PlaceDetailView.swift */,
 				A692A17A2F7BB4CE00B12E96 /* SearchBarView.swift */,
@@ -119,6 +123,7 @@
 		A692A1722F7BB42800B12E96 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				A6441D8F2FA0B14E00F6AB59 /* Untitled.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -200,6 +205,7 @@
 				A692A1832F7BC37100B12E96 /* PlaceItem.swift in Sources */,
 				A692A1822F7BC36C00B12E96 /* TransportType.swift in Sources */,
 				A692A17D2F7BB4DF00B12E96 /* PlaceDetailView.swift in Sources */,
+				A61883CD2F84ECAD00A5F996 /* MapViewRepresentable.swift in Sources */,
 				A692A17B2F7BB4D500B12E96 /* SearchBarView.swift in Sources */,
 				A692A1812F7BC36200B12E96 /* LocationService.swift in Sources */,
 				A692A17F2F7BB4E800B12E96 /* FavoritesView.swift in Sources */,

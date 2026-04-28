@@ -25,4 +25,15 @@ enum TransportType: String, CaseIterable, Identifiable {
             return .transit
         }
     }
+
+    var iconName: String {
+        switch self {
+        case .automobile:
+            return "car.fill"
+        case .walking:
+            return "figure.walk"
+        case .transit:
+            return "tram.fill"
+        }
+    }
 }
