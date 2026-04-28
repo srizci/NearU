@@ -26,7 +26,14 @@ struct ContentView: View {
                     Label("Favoriler", systemImage: "heart.fill")
                 }
                 .tag(1)
+            LoopRouteView(selectedTab: $selectedTab)
+                .tabItem {
+                    Image(systemName: "figure.run")
+                    Text("Koşu")
+                }
+                .tag(2)
         }
+        .environmentObject(viewModel)
     }
 }
 

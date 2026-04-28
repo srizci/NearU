@@ -36,20 +36,20 @@ struct PlaceDetailView: View {
                         if let category = place.category, !category.isEmpty {
                             Label(category, systemImage: "tag.fill")
                                 .font(.caption)
-                                .foregroundColor(.blue)
+                                .foregroundColor(.black)
                         }
 
                         if let distanceText = distanceText {
                             Label(distanceText, systemImage: "location.fill")
                                 .font(.caption)
-                                .foregroundColor(.green)
+                                .foregroundColor(.black)
                         }
                     }
 
                     if let routeInfoText = routeInfoText {
                         Text(routeInfoText)
                             .font(.footnote)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.black)
                             .padding(.top, 2)
                     }
                 }
@@ -79,7 +79,7 @@ struct PlaceDetailView: View {
                 .pickerStyle(.segmented)
             }
 
-            HStack(spacing: 12) {
+            HStack(spacing: 14) {
                 Button(action: onToggleFavorite) {
                     Label(
                         isFavorite ? "Favoriden Çıkar" : "Favoriye Ekle",
@@ -87,18 +87,18 @@ struct PlaceDetailView: View {
                     )
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .background(isFavorite ? Color.pink.opacity(0.15) : Color.orange.opacity(0.15))
-                    .foregroundColor(isFavorite ? .pink : .orange)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .background(isFavorite ? Color.red.opacity(0.7) : Color.red.opacity(0.2))
+                    .foregroundColor(isFavorite ? .red : .red)
+                    .clipShape(RoundedRectangle(cornerRadius: 30.0))
                 }
 
                 Button(action: onCreateRoute) {
                     Label("Rota Oluştur", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(Color.blue)
+                        .background(Color.black)
                         .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: 30.0))
                 }
             }
 
@@ -107,9 +107,9 @@ struct PlaceDetailView: View {
                     .font(.subheadline.bold())
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
-                    .background(Color(.secondarySystemBackground))
-                    .foregroundColor(.primary)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .background(Color(.black))
+                    .foregroundColor(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 30.0))
             }
         }
         .padding()

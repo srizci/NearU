@@ -53,13 +53,13 @@ struct FavoritesView: View {
                                         if let category = place.category {
                                             Text(category)
                                                 .font(.caption)
-                                                .foregroundColor(.blue)
+                                                .foregroundColor(.black)
                                         }
 
                                         if let distance = viewModel.distanceText(for: place) {
                                             Text(distance)
                                                 .font(.caption)
-                                                .foregroundColor(.green)
+                                                .foregroundColor(.black)
                                         }
                                     }
                                 }

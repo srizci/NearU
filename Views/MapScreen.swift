@@ -67,54 +67,6 @@ struct MapScreen: View {
                     .padding(.horizontal)
                 }
 
-                if viewModel.routeParts.isEmpty &&
-                    viewModel.selectedPlace == nil &&
-                    !viewModel.isShowingRoutePreview &&
-                    !viewModel.isNavigating {
-
-                    VStack(spacing: 10) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text("Koşu / Yürüyüş Rotası")
-                                    .font(.headline)
-
-                                Text("Başlangıç ve bitiş aynı olacak şekilde rota oluştur.")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-
-                            Spacer()
-                        }
-
-                        Picker("Mesafe", selection: $viewModel.selectedLoopDistance) {
-                            ForEach(LoopRouteDistance.allCases) { distance in
-                                Text(distance.title).tag(distance)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-
-                        Button {
-                            viewModel.calculateLoopRoute()
-                        } label: {
-                            HStack {
-                                Image(systemName: "figure.walk")
-                                Text("Rota Oluştur")
-                            }
-                            .buttonStyle(MainButtonStyle(color: .appAccent))
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color.black)
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
-                        }
-                    }
-                    .padding()
-                    .background(.thickMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 18))
-                    .padding(.horizontal)
-                }
-
                 Spacer()
 
                 if viewModel.isLoading {

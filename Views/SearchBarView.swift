@@ -37,16 +37,16 @@ struct SearchBarView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 12)
             .background(Color(.systemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
+            .clipShape(RoundedRectangle(cornerRadius: 30.0))
+            .shadow(color: .black.opacity(0.5), radius: 4, x: 0, y: 2)
 
             Button(action: onSearch) {
                 Image(systemName: "arrow.right")
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(width: 46, height: 46)
-                    .background(Color.blue)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .background(Color.black.opacity(0.8))
+                    .clipShape(RoundedRectangle(cornerRadius: 19.0))
             }
         }
         .padding(.horizontal)
