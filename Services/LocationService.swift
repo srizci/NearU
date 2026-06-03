@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import CoreLocation
+internal import CoreLocation
 import Combine
 
 final class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
@@ -32,6 +32,7 @@ final class LocationService: NSObject, ObservableObject, CLLocationManagerDelega
         manager.startUpdatingLocation()
     }
 
+    // FIX #5: stopUpdatingLocation artık public — MapScreen'den çağrılabilir
     func stopUpdatingLocation() {
         manager.stopUpdatingLocation()
     }

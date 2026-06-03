@@ -50,16 +50,17 @@ struct FavoritesView: View {
                                     }
 
                                     HStack(spacing: 10) {
-                                        if let category = place.category {
+                                        // FIX #7: Ham kategori yerine okunabilir kategori
+                                        if let category = place.readableCategory {
                                             Text(category)
                                                 .font(.caption)
-                                                .foregroundColor(.black)
+                                                .foregroundColor(.secondary)
                                         }
 
                                         if let distance = viewModel.distanceText(for: place) {
                                             Text(distance)
                                                 .font(.caption)
-                                                .foregroundColor(.black)
+                                                .foregroundColor(.secondary)
                                         }
                                     }
                                 }

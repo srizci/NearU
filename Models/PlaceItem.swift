@@ -28,14 +28,22 @@ struct PlaceItem: Identifiable, Codable, Hashable {
         self.address = address
         self.category = category
 
-        let safeName = name
-            .lowercased()
-            .replacingOccurrences(of: " ", with: "_")
-
-        self.id = "\(safeName)_\(latitude)_\(longitude)"
+        // FIX #1: UUID kullanarak ID çakışması önlendi
+        self.id = UUID().uuidString
     }
 
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+
+    // FIX #7: Ham MKPOICategory string'ini okunabilir hale getiren yardımcı
+    var readableCategory: String? {
+        guard let category else { return nil }
+        // "MKPOICategory_Restaurant" → "Restaurant"
+        if let range = category.range(of: "_") {
+            let readable = String(category[range.upperBound...])
+            return readable.isEmpty ? nil : readable
+        }
+        return category
     }
 }

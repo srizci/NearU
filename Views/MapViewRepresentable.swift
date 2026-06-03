@@ -25,6 +25,8 @@ struct MapViewRepresentable: UIViewRepresentable {
     let places: [PlaceItem]
     let selectedPlace: PlaceItem?
     let routeParts: [MKRoute]
+    let alternativeRoutes: [MKRoute]
+    let selectedRouteIndex: Int
     let onSelectPlace: (PlaceItem) -> Void
     let onTapCoordinate: (CLLocationCoordinate2D) -> Void
 
@@ -70,14 +72,28 @@ struct MapViewRepresentable: UIViewRepresentable {
 
         mapView.removeOverlays(mapView.overlays)
 
-        if !routeParts.isEmpty {
-            for route in routeParts {
+        // Önizleme modunda: tüm alternatif rotaları çiz (seçili en üste gelsin)
+        let routesToDraw: [MKRoute]
+        if !alternativeRoutes.isEmpty {
+            // Seçili olmayan rotalar önce, seçili rota en son (en üstte)
+            let unselected = alternativeRoutes.enumerated()
+                .filter { $0.offset != selectedRouteIndex }
+                .map { $0.element }
+            let selected = selectedRouteIndex < alternativeRoutes.count
+                ? [alternativeRoutes[selectedRouteIndex]] : []
+            routesToDraw = unselected + selected
+        } else {
+            routesToDraw = routeParts
+        }
+
+        if !routesToDraw.isEmpty {
+            for route in routesToDraw {
                 mapView.addOverlay(route.polyline)
             }
 
-            var mapRect = routeParts[0].polyline.boundingMapRect
-
-            for route in routeParts.dropFirst() {
+            let allRoutes = alternativeRoutes.isEmpty ? routeParts : alternativeRoutes
+            var mapRect = allRoutes[0].polyline.boundingMapRect
+            for route in allRoutes.dropFirst() {
                 mapRect = mapRect.union(route.polyline.boundingMapRect)
             }
 
@@ -104,6 +120,9 @@ struct MapViewRepresentable: UIViewRepresentable {
     final class Coordinator: NSObject, MKMapViewDelegate {
         var parent: MapViewRepresentable
 
+        // FIX #10: Region geri yazımını debounce etmek için timer
+        private var regionChangeTimer: Timer?
+
         init(parent: MapViewRepresentable) {
             self.parent = parent
         }
@@ -117,8 +136,12 @@ struct MapViewRepresentable: UIViewRepresentable {
             parent.onTapCoordinate(coordinate)
         }
 
+        // FIX #10: Her kaydırmada değil, 0.15 sn debounce ile ViewModel güncelleniyor
         func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
-            parent.region = mapView.region
+            regionChangeTimer?.invalidate()
+            regionChangeTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { [weak self] _ in
+                self?.parent.region = mapView.region
+            }
         }
 
         func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
@@ -132,10 +155,15 @@ struct MapViewRepresentable: UIViewRepresentable {
             }
 
             let identifier = "PlaceAnnotationView"
-            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView
+            var annotationView = mapView.dequeueReusableAnnotationView(
+                withIdentifier: identifier
+            ) as? MKMarkerAnnotationView
 
             if annotationView == nil {
-                annotationView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+                annotationView = MKMarkerAnnotationView(
+                    annotation: annotation,
+                    reuseIdentifier: identifier
+                )
                 annotationView?.canShowCallout = true
             }
 
@@ -149,10 +177,27 @@ struct MapViewRepresentable: UIViewRepresentable {
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             if let polyline = overlay as? MKPolyline {
                 let renderer = MKPolylineRenderer(polyline: polyline)
-                renderer.strokeColor = .systemBlue
-                renderer.lineWidth = 6
                 renderer.lineJoin = .round
                 renderer.lineCap = .round
+
+                // Alternatif rotalar varken seçili olanı mavi/kalın, diğerlerini gri/ince göster
+                let routes = parent.alternativeRoutes.isEmpty ? parent.routeParts : parent.alternativeRoutes
+                if let idx = routes.firstIndex(where: { $0.polyline === polyline }) {
+                    if idx == parent.selectedRouteIndex {
+                        renderer.strokeColor = .systemBlue
+                        renderer.lineWidth = 7
+                        renderer.alpha = 1.0
+                    } else {
+                        renderer.strokeColor = .systemGray
+                        renderer.lineWidth = 4
+                        renderer.alpha = 0.55
+                    }
+                } else {
+                    renderer.strokeColor = .systemBlue
+                    renderer.lineWidth = 6
+                    renderer.alpha = 1.0
+                }
+
                 return renderer
             }
 

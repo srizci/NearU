@@ -5,7 +5,7 @@
 
 import SwiftUI
 import MapKit
-import CoreLocation
+internal import CoreLocation
 import Combine
 
 enum NearbyCategory: String, CaseIterable, Identifiable {
@@ -58,6 +58,10 @@ final class MapViewModel: ObservableObject {
     @Published var route: MKRoute?
     @Published var routeParts: [MKRoute] = []
 
+    // Alternatif rotalar
+    @Published var alternativeRoutes: [MKRoute] = []
+    @Published var selectedRouteIndex: Int = 0
+
     @Published var isLoading: Bool = false
     @Published var errorMessage: String = ""
     @Published var showErrorAlert: Bool = false
@@ -97,6 +101,10 @@ final class MapViewModel: ObservableObject {
 
     func startLocationUpdates() {
         locationService.startUpdatingLocation()
+    }
+
+    func stopLocationUpdates() {
+        locationService.stopUpdatingLocation()
     }
 
     private func bindLocation() {
@@ -183,7 +191,7 @@ final class MapViewModel: ObservableObject {
 
         MKLocalSearch(request: request).start { [weak self] response, error in
             DispatchQueue.main.async {
-                guard let self else { return }
+                guard let self = self else { return }
                 self.isLoading = false
 
                 if let error {
@@ -234,20 +242,30 @@ final class MapViewModel: ObservableObject {
         request.resultTypes = .pointOfInterest
 
         MKLocalSearch(request: request).start { [weak self] response, _ in
-            guard let self else { return }
+            // FIX #2: guard let self = self ile Swift uyumluluğu sağlandı
+            guard let self = self else { return }
             guard let items = response?.mapItems, !items.isEmpty else { return }
 
             let tappedLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
 
             let nearestItem = items.min { first, second in
-                let firstLoc = CLLocation(latitude: first.placemark.coordinate.latitude, longitude: first.placemark.coordinate.longitude)
-                let secondLoc = CLLocation(latitude: second.placemark.coordinate.latitude, longitude: second.placemark.coordinate.longitude)
+                let firstLoc = CLLocation(
+                    latitude: first.placemark.coordinate.latitude,
+                    longitude: first.placemark.coordinate.longitude
+                )
+                let secondLoc = CLLocation(
+                    latitude: second.placemark.coordinate.latitude,
+                    longitude: second.placemark.coordinate.longitude
+                )
                 return tappedLocation.distance(from: firstLoc) < tappedLocation.distance(from: secondLoc)
             }
 
             guard let item = nearestItem else { return }
 
-            let itemLocation = CLLocation(latitude: item.placemark.coordinate.latitude, longitude: item.placemark.coordinate.longitude)
+            let itemLocation = CLLocation(
+                latitude: item.placemark.coordinate.latitude,
+                longitude: item.placemark.coordinate.longitude
+            )
             if tappedLocation.distance(from: itemLocation) > 50 { return }
 
             let place = PlaceItem(
@@ -278,13 +296,13 @@ final class MapViewModel: ObservableObject {
         request.source = MKMapItem(placemark: MKPlacemark(coordinate: userCoordinate))
         request.destination = MKMapItem(placemark: MKPlacemark(coordinate: selectedPlace.coordinate))
         request.transportType = selectedTransportType.mkType
-        request.requestsAlternateRoutes = false
+        request.requestsAlternateRoutes = true
 
         isLoading = true
 
         MKDirections(request: request).calculate { [weak self] response, error in
             DispatchQueue.main.async {
-                guard let self else { return }
+                guard let self = self else { return }
                 self.isLoading = false
 
                 if let error {
@@ -292,18 +310,22 @@ final class MapViewModel: ObservableObject {
                     return
                 }
 
-                guard let route = response?.routes.first else {
+                guard let routes = response?.routes, !routes.isEmpty else {
                     self.showError("Bu konum için rota bulunamadı.")
                     return
                 }
 
-                self.route = route
-                self.routeParts = [route]
+                // En fazla 3 rota, mesafeye göre sırala
+                let sortedRoutes = routes.sorted { $0.distance < $1.distance }.prefix(3)
+                self.alternativeRoutes = Array(sortedRoutes)
+                self.selectedRouteIndex = 0
+                self.route = self.alternativeRoutes[0]
+                self.routeParts = [self.alternativeRoutes[0]]
                 self.isLoopRouteMode = false
                 self.loopTargetDistanceText = ""
                 self.previewDestinationName = selectedPlace.name
                 self.navigationDestination = selectedPlace.coordinate
-                self.routeStepTexts = self.cleanStepTexts(from: [route])
+                self.routeStepTexts = self.cleanStepTexts(from: [self.alternativeRoutes[0]])
                 self.isShowingRoutePreview = true
                 self.isNavigating = false
                 self.hasArrived = false
@@ -313,6 +335,16 @@ final class MapViewModel: ObservableObject {
                 self.updateRemainingRouteInfo()
             }
         }
+    }
+
+    func selectAlternativeRoute(at index: Int) {
+        guard index < alternativeRoutes.count else { return }
+        selectedRouteIndex = index
+        let chosen = alternativeRoutes[index]
+        route = chosen
+        routeParts = [chosen]
+        routeStepTexts = cleanStepTexts(from: [chosen])
+        updateRemainingRouteInfo()
     }
 
     func calculateLoopRoute() {
@@ -331,7 +363,7 @@ final class MapViewModel: ObservableObject {
         let pointB = coordinate(from: start, distanceMeters: radius, bearingDegrees: 135)
 
         calculateRouteSegment(from: start, to: pointA) { [weak self] firstRoute in
-            guard let self else { return }
+            guard let self = self else { return }
 
             guard let firstRoute else {
                 DispatchQueue.main.async {
@@ -389,6 +421,8 @@ final class MapViewModel: ObservableObject {
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: MKPlacemark(coordinate: source))
         request.destination = MKMapItem(placemark: MKPlacemark(coordinate: destination))
+        // FIX #6: Döngüsel rotada her zaman walking — bu kasıtlı (koşu/yürüyüş rotası)
+        // LoopRouteView'da ulaşım seçeneği gösterilmiyor, tutarlı.
         request.transportType = .walking
         request.requestsAlternateRoutes = false
 
@@ -397,7 +431,6 @@ final class MapViewModel: ObservableObject {
                 completion(nil)
                 return
             }
-
             completion(response?.routes.first)
         }
     }
@@ -464,6 +497,8 @@ final class MapViewModel: ObservableObject {
     func clearRoute() {
         route = nil
         routeParts = []
+        alternativeRoutes = []
+        selectedRouteIndex = 0
         routeStepTexts = []
         previewDestinationName = ""
         isShowingRoutePreview = false
@@ -483,13 +518,18 @@ final class MapViewModel: ObservableObject {
         guard !routeParts.isEmpty else { return }
 
         if let destination = navigationDestination {
-            let destinationLocation = CLLocation(latitude: destination.latitude, longitude: destination.longitude)
+            let destinationLocation = CLLocation(
+                latitude: destination.latitude,
+                longitude: destination.longitude
+            )
             let destinationDistance = userLocation.distance(from: destinationLocation)
 
             if destinationDistance <= 25 && currentStepIndex >= max(navigableSteps().count - 2, 0) {
                 hasArrived = true
                 isNavigating = false
-                currentInstruction = isLoopRouteMode ? "Döngüsel rota tamamlandı" : "Varış noktasına ulaştın"
+                currentInstruction = isLoopRouteMode
+                    ? "Döngüsel rota tamamlandı"
+                    : "Varış noktasına ulaştın"
                 currentStepDistanceText = ""
                 remainingRouteDistanceText = "0 m"
                 remainingRouteTimeText = "0 dk"
@@ -516,12 +556,21 @@ final class MapViewModel: ObservableObject {
         updateCurrentInstruction()
         currentStepDistanceText = formattedDistance(currentStepDistance)
 
-        let totalDistance = totalRouteDistance()
-        let passedRatio = Double(currentStepIndex) / Double(max(steps.count, 1))
-        let remainingDistance = totalDistance * max(0, 1 - passedRatio)
-
+        // FIX #4: Kalan mesafe adım sayısı oranıyla değil,
+        // geçilen adımların gerçek mesafesiyle hesaplanıyor
+        let remainingDistance = remainingDistanceFrom(stepIndex: currentStepIndex, steps: steps)
         remainingRouteDistanceText = formattedDistance(remainingDistance)
-        remainingRouteTimeText = formattedTravelTime(totalRouteTime() * max(0, 1 - passedRatio))
+
+        let totalDistance = totalRouteDistance()
+        let totalTime = totalRouteTime()
+        let ratio = totalDistance > 0 ? remainingDistance / totalDistance : 0
+        remainingRouteTimeText = formattedTravelTime(totalTime * ratio)
+    }
+
+    // FIX #4: Adım index'inden itibaren gerçek kalan mesafeyi hesapla
+    private func remainingDistanceFrom(stepIndex: Int, steps: [MKRoute.Step]) -> CLLocationDistance {
+        guard stepIndex < steps.count else { return 0 }
+        return steps[stepIndex...].reduce(0) { $0 + $1.distance }
     }
 
     private func updateCurrentInstruction() {
@@ -536,7 +585,6 @@ final class MapViewModel: ObservableObject {
             if instruction.lowercased().contains("hedefe") ||
                 instruction.lowercased().contains("varıyorsunuz") ||
                 instruction.isEmpty {
-
                 currentInstruction = "Mavi çizgiyi takip ederek başlangıç noktasına geri dön"
             } else {
                 currentInstruction = instruction
@@ -580,7 +628,10 @@ final class MapViewModel: ObservableObject {
             return step.distance
         }
 
-        let targetLocation = CLLocation(latitude: lastCoordinate.latitude, longitude: lastCoordinate.longitude)
+        let targetLocation = CLLocation(
+            latitude: lastCoordinate.latitude,
+            longitude: lastCoordinate.longitude
+        )
         return userLocation.distance(from: targetLocation)
     }
 
@@ -640,7 +691,6 @@ final class MapViewModel: ObservableObject {
         } else {
             favorites.append(place)
         }
-
         saveFavorites()
     }
 

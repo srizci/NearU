@@ -13,6 +13,8 @@ struct PlaceDetailView: View {
     let isFavorite: Bool
     let distanceText: String?
     let routeInfoText: String?
+    // FIX #3: Rotayı Temizle butonu sadece rota varsa görünür
+    let hasRoute: Bool
 
     @Binding var selectedTransportType: TransportType
 
@@ -33,7 +35,8 @@ struct PlaceDetailView: View {
                         .foregroundColor(.secondary)
 
                     HStack(spacing: 10) {
-                        if let category = place.category, !category.isEmpty {
+                        // FIX #7: Ham kategori yerine okunabilir kategori
+                        if let category = place.readableCategory {
                             Label(category, systemImage: "tag.fill")
                                 .font(.caption)
                                 .foregroundColor(.black)
@@ -88,7 +91,7 @@ struct PlaceDetailView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
                     .background(isFavorite ? Color.red.opacity(0.7) : Color.red.opacity(0.2))
-                    .foregroundColor(isFavorite ? .red : .red)
+                    .foregroundColor(.red)
                     .clipShape(RoundedRectangle(cornerRadius: 30.0))
                 }
 
@@ -102,14 +105,17 @@ struct PlaceDetailView: View {
                 }
             }
 
-            Button(action: onClearRoute) {
-                Text("Rotayı Temizle")
-                    .font(.subheadline.bold())
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(Color(.black))
-                    .foregroundColor(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 30.0))
+            // FIX #3: Sadece aktif rota varsa "Rotayı Temizle" göster
+            if hasRoute {
+                Button(action: onClearRoute) {
+                    Text("Rotayı Temizle")
+                        .font(.subheadline.bold())
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(Color.black)
+                        .foregroundColor(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 30.0))
+                }
             }
         }
         .padding()
@@ -131,6 +137,7 @@ struct PlaceDetailView: View {
         isFavorite: false,
         distanceText: "1.4 km",
         routeInfoText: "2.1 km • Yaklaşık 6 dk",
+        hasRoute: true,
         selectedTransportType: .constant(.automobile),
         onClose: {},
         onToggleFavorite: {},

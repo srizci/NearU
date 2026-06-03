@@ -17,6 +17,8 @@ struct MapScreen: View {
                 places: viewModel.places,
                 selectedPlace: viewModel.selectedPlace,
                 routeParts: viewModel.routeParts,
+                alternativeRoutes: viewModel.alternativeRoutes,
+                selectedRouteIndex: viewModel.selectedRouteIndex,
                 onSelectPlace: { place in
                     viewModel.selectPlace(place)
                 },
@@ -103,7 +105,8 @@ struct MapScreen: View {
                                         }
 
                                         HStack(spacing: 10) {
-                                            if let category = place.category {
+                                            // FIX #7: Ham kategori yerine okunabilir kategori
+                                            if let category = place.readableCategory {
                                                 Text(category)
                                                     .font(.caption)
                                                     .foregroundColor(.blue)
@@ -173,6 +176,8 @@ struct MapScreen: View {
                     .padding(.trailing)
                 }
 
+                // FIX #3: PlaceDetailView sadece rota yokken gösteriliyor
+                // "Rotayı Temizle" butonu da sadece rota varsa gösterilecek (PlaceDetailView'da düzeltildi)
                 if let selectedPlace = viewModel.selectedPlace,
                    !viewModel.isShowingRoutePreview,
                    !viewModel.isNavigating {
@@ -181,6 +186,7 @@ struct MapScreen: View {
                         isFavorite: viewModel.isFavorite(selectedPlace),
                         distanceText: viewModel.distanceText(for: selectedPlace),
                         routeInfoText: viewModel.routeInfoText(),
+                        hasRoute: !viewModel.routeParts.isEmpty,
                         selectedTransportType: $viewModel.selectedTransportType,
                         onClose: {
                             viewModel.selectedPlace = nil
@@ -211,12 +217,6 @@ struct MapScreen: View {
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
                                 }
-
-                                if let info = viewModel.routeInfoText() {
-                                    Text(info)
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                }
                             }
 
                             Spacer()
@@ -231,6 +231,71 @@ struct MapScreen: View {
                                     .background(Color(.secondarySystemBackground))
                                     .clipShape(Circle())
                             }
+                        }
+
+                        // Alternatif rota kartları (döngüsel rotada gösterme)
+                        if !viewModel.isLoopRouteMode && viewModel.alternativeRoutes.count > 1 {
+                            let routeLabels = ["En Kısa", "Alternatif", "3. Seçenek"]
+                            let routeColors: [Color] = [.blue, .orange, .purple]
+
+                            VStack(spacing: 8) {
+                                ForEach(Array(viewModel.alternativeRoutes.enumerated()), id: \.offset) { idx, altRoute in
+                                    let isSelected = viewModel.selectedRouteIndex == idx
+                                    let distKm = altRoute.distance >= 1000
+                                        ? String(format: "%.1f km", altRoute.distance / 1000)
+                                        : "\(Int(altRoute.distance)) m"
+                                    let mins = max(Int(altRoute.expectedTravelTime / 60), 1)
+                                    let timeStr = mins < 60 ? "\(mins) dk" : "\(mins/60) sa \(mins%60) dk"
+
+                                    Button {
+                                        viewModel.selectAlternativeRoute(at: idx)
+                                    } label: {
+                                        HStack(spacing: 12) {
+                                            RoundedRectangle(cornerRadius: 3)
+                                                .fill(routeColors[idx % routeColors.count])
+                                                .frame(width: 4, height: 36)
+
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(routeLabels[idx % routeLabels.count])
+                                                    .font(.subheadline.bold())
+                                                    .foregroundColor(isSelected ? .primary : .secondary)
+                                                Text("\(distKm)  •  \(timeStr)")
+                                                    .font(.caption)
+                                                    .foregroundColor(.secondary)
+                                            }
+
+                                            Spacer()
+
+                                            if isSelected {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .foregroundColor(.blue)
+                                                    .font(.title3)
+                                            }
+                                        }
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 10)
+                                        .background(
+                                            isSelected
+                                            ? routeColors[idx % routeColors.count].opacity(0.1)
+                                            : Color(.tertiarySystemBackground)
+                                        )
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(
+                                                    isSelected ? routeColors[idx % routeColors.count] : Color.clear,
+                                                    lineWidth: 1.5
+                                                )
+                                        )
+                                    }
+                                }
+                            }
+                        } else if let info = viewModel.routeInfoText() {
+                            // Tek rota veya döngüsel rota — eski bilgi satırı
+                            Text(info)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
 
                         if !viewModel.routeStepTexts.isEmpty {
@@ -250,7 +315,7 @@ struct MapScreen: View {
                                     }
                                 }
                             }
-                            .frame(maxHeight: 180)
+                            .frame(maxHeight: 140)
                         }
 
                         Button {
@@ -358,8 +423,14 @@ struct MapScreen: View {
                 }
             }
         }
+        // FIX #5: onDisappear'da konum güncellemesi durduruluyor (pil tasarrufu)
         .onAppear {
             viewModel.startLocationUpdates()
+        }
+        .onDisappear {
+            if !viewModel.isNavigating {
+                viewModel.stopLocationUpdates()
+            }
         }
         .alert("Uyarı", isPresented: $viewModel.showErrorAlert) {
             Button("Tamam", role: .cancel) { }
